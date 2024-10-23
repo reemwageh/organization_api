@@ -9,6 +9,9 @@ router = APIRouter()
 
 @router.post("/organization", response_model=OrganizationRead, dependencies=[Depends(get_current_user)])
 async def create_organization(org: OrganizationCreate):
+    """
+    Create a new organization and return its details.
+    """
     new_org = {
         "name": org.name,
         "description": org.description,
@@ -20,6 +23,9 @@ async def create_organization(org: OrganizationCreate):
 
 @router.get("/organization/{organization_id}", response_model=OrganizationRead, dependencies=[Depends(get_current_user)])
 async def read_organization(organization_id: str):
+    """
+    Retrieve organization details by ID.
+    """
     org = await database["organizations"].find_one({"_id": ObjectId(organization_id)})
     if org is None:
         raise HTTPException(status_code=404, detail="Organization not found")
@@ -33,6 +39,9 @@ async def read_organization(organization_id: str):
 
 @router.get("/organization", response_model=List[OrganizationRead], dependencies=[Depends(get_current_user)])
 async def read_all_organizations():
+    """
+    Retrieve all organizations.
+    """
     orgs = await database["organizations"].find().to_list(100)
     return [OrganizationRead(
         organization_id=str(org["_id"]),
@@ -43,6 +52,9 @@ async def read_all_organizations():
 
 @router.put("/organization/{organization_id}", response_model=OrganizationRead, dependencies=[Depends(get_current_user)])
 async def update_organization(organization_id: str, org: OrganizationCreate):
+    """
+    Update an organization's name and description.
+    """
     result = await database["organizations"].update_one(
         {"_id": ObjectId(organization_id)},
         {"$set": {"name": org.name, "description": org.description}}
@@ -54,6 +66,9 @@ async def update_organization(organization_id: str, org: OrganizationCreate):
 
 @router.delete("/organization/{organization_id}", dependencies=[Depends(get_current_user)])
 async def delete_organization(organization_id: str):
+    """
+    Delete an organization by ID.
+    """
     result = await database["organizations"].delete_one({"_id": ObjectId(organization_id)})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Organization not found")
@@ -62,4 +77,13 @@ async def delete_organization(organization_id: str):
 
 @router.post("/organization/{organization_id}/invite", dependencies=[Depends(get_current_user)])
 async def invite_user_to_organization(organization_id: str, user: UserInvite):
+    """
+    Invite a user to join the specified organization.
+    """
+    org = await database["organizations"].find_one({"_id": ObjectId(organization_id)})
+    if org is None:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    org["organization_members"].append(user.email)  
+    await database["organizations"].update_one({"_id": ObjectId(organization_id)}, {"$set": {"organization_members": org["organization_members"]}})
+
     return {"message": "User invited successfully"}

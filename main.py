@@ -1,12 +1,14 @@
 from fastapi import FastAPI
-from auth import router as auth_router # changed this line from "from auth import router" to "from auth import router as auth_router" to fix the error
-from organizations import router as org_router # changed this line from "from organizations import router" to "from organizations import router as org_router" to fix the error
-
+from auth import router as auth_router 
+from organizations import router as org_router 
 app = FastAPI()
 
-app.include_router(auth_router) # changed this line from "app.include_router(auth)" to "app.include_router(auth_router)" to fix the error
-app.include_router(org_router) # changed this line from "app.include_router(organizations)" to "app.include_router(org_router)" to fix the error
+app.include_router(auth_router) 
+app.include_router(org_router) 
 
 @app.get("/")
 async def read_root():
+    """
+    Root endpoint providing a welcome message.
+    """
     return {"message": "Welcome to the Organization API"}
